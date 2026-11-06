@@ -1,2 +1,4 @@
 bleak>=0.22
 Pillow>=10.0
+
+lunardate>=0.2

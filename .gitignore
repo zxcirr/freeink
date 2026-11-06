@@ -12,3 +12,5 @@ __pycache__/
 host/out.png
 *.log
 /backup/
+# vendored GPL dependency (do not redistribute)
+host/_libs/
