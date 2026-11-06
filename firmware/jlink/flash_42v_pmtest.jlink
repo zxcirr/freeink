@@ -1,0 +1,7 @@
+// Flash the PM-enabled candidate build (sleep ON + refresh guarded by
+// pm_sleep_prevent) to ZKC42V for bench validation.
+h
+loadbin firmware\build\freeink_ZKC42V_pmtest.bin, 0x404000
+r
+g
+exit

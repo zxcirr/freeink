@@ -29,6 +29,7 @@
 #include "om.h"
 #include "om_driver.h"
 #include "omble.h"
+#include "pm.h"
 #include "board.h"
 #include "epd.h"
 #include "ble_epd.h"
@@ -380,11 +381,21 @@ void ble_epd_task(void)
     s_pending = 0;
 
     if (op == 1) {
+#ifdef PM_SLEEP_ENABLE
+        /* The whole refresh (init + RAM writes + BUSY polling) must run
+           with system sleep prevented: the BLE controller otherwise
+           transitions the chip to sleep at an event boundary mid-SPI and
+           drv_spi_transfer freezes on the TX FIFO (2026-11 incident). */
+        pm_sleep_prevent(PM_ID_USER0);
+#endif
         if (s_format == 3) {
             epd_show_indexed(s_image);
         } else {
             epd_show(s_image, s_image + EPD_PLANE_BYTES);
         }
+#ifdef PM_SLEEP_ENABLE
+        pm_sleep_allow(PM_ID_USER0);
+#endif
         led_set_pattern(LED_SUCCESS);
 #ifdef EPD_DEBUG
         uint8_t done[15] = { EVT_DONE, seq, STATUS_OK,
@@ -400,7 +411,13 @@ void ble_epd_task(void)
         notify(done, sizeof(done));
 #endif
     } else if (op == 2) {
+#ifdef PM_SLEEP_ENABLE
+        pm_sleep_prevent(PM_ID_USER0);
+#endif
         epd_clear();
+#ifdef PM_SLEEP_ENABLE
+        pm_sleep_allow(PM_ID_USER0);
+#endif
         led_set_pattern(LED_SUCCESS);
 #ifdef EPD_DEBUG
         uint8_t done[15] = { EVT_DONE, seq, STATUS_OK,
