@@ -1,0 +1,6 @@
+// Restore the ZKC42V from the file created by backup_42v.jlink.
+h
+loadbin backup\zkc42v-app-0x404000.bin, 0x404000
+r
+g
+exit

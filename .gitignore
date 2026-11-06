@@ -1,0 +1,14 @@
+# build outputs
+firmware/build/
+firmware/gcc/.build_*/
+firmware/gcc/a.bin
+firmware/gcc/a.axf
+
+# python
+__pycache__/
+*.pyc
+
+# local artifacts
+host/out.png
+*.log
+/backup/

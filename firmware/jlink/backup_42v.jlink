@@ -1,0 +1,7 @@
+// Full backup of the readable flash range 0x404000..0x4FFFFF of the ZKC42V.
+// Run this BEFORE flashing FreeInk to a stock 4.2 tag!
+h
+savebin backup\zkc42v-app-0x404000.bin, 0x404000, 0xFC000
+r
+g
+exit
