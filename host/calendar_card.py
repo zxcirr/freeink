@@ -116,15 +116,99 @@ def get_weather(city, timeout=8):
         return None
 
 
+def draw_daily(date, a):
+    """Compact landscape daily card for the 2.13" ZKC21V (250x122 design).
+
+    The host pipeline applies the ZKC21V default compensation (rotate 90 +
+    mirror-y), so authoring it landscape makes it read correctly on the tag.
+    """
+    w, h = 250, 122
+    img = Image.new("RGB", (w * SCALE, h * SCALE), WHITE)
+    d = ImageDraw.Draw(img)
+
+    def T(x, y, s, size, fill=BLACK, anchor="lm", bold=True):
+        d.text((x * SCALE, y * SCALE), s, font=font(size, bold),
+               fill=fill, anchor=anchor)
+
+    def R(x, y, x2, y2, fill):
+        d.rectangle([x * SCALE, y * SCALE, x2 * SCALE, y2 * SCALE], fill=fill)
+
+    lu = Solar.fromYmd(date.year, date.month, date.day).getLunar()
+    iso = date.isocalendar()
+    weekend = date.weekday() >= 5
+
+    # red header band
+    R(0, 0, w, 22, RED)
+    T(6, 11, f"{date.year}年{date.month}月{date.day}日 星期{WEEKDAYS[date.weekday()]}",
+      12, WHITE)
+    T(w - 6, 11, f"第{iso[1]}周", 12, WHITE, anchor="rm")
+
+    # line: lunar + ganzhi ; solar term right in red
+    ly = lu.getYearInGanZhi()
+    left = (f"农历{lu.getMonthInChinese()}月{lu.getDayInChinese()} · {ly}年·"
+            f"属{ZODIAC[ZHI.index(ly[1])]} · {lu.getDayInGanZhi()}日")
+    T(6, 32, left, 10)
+    term = ""
+    nq = lu.getNextJieQi(True)
+    if nq:
+        nd = dt.date.fromisoformat(nq.getSolar().toYmd())
+        dd = (nd - date).days
+        term = ("明日" + nq.getName() if dd == 1 else
+                "今日" + nq.getName() if dd == 0 else
+                f"{dd}天后{nq.getName()}")
+    if term:
+        T(w - 6, 32, term, 10, RED, anchor="rm")
+
+    # weather line
+    wx = None if a.no_weather else get_weather(a.city)
+    if wx:
+        T(6, 47, f"{wx['city']} {wx['desc']} {wx['now']}  今日{wx['lo']}~{wx['hi']}℃"
+                 f"  湿度{wx['hum']}%", 10)
+    else:
+        T(6, 47, "--", 10)
+
+    # black "big day" number as visual anchor
+    T(w - 12, 84, str(date.day), 34, RED if weekend else BLACK, anchor="rm")
+
+    # yi / ji
+    def chip(x, y, ch, size=9):
+        s2 = size + 3
+        R(x, y, x + s2, y + s2, RED)
+        T(x + s2 / 2, y + s2 / 2, ch, size, WHITE, anchor="mm")
+
+    yi = " ".join(lu.getDayYi()[:3])
+    ji = " ".join(lu.getDayJi()[:2])
+    chip(6, 68, "宜")
+    T(21, 72, yi, 9)
+    chip(6, 88, "忌")
+    T(21, 92, ji, 9)
+
+    # footer hairline
+    R(0, 106, w, 107, BLACK)
+    T(6, 115, f"第{iso[1]}周 · 今年第{date.timetuple().tm_yday}天", 9, BLACK)
+
+    return img.resize((250, 122), Image.LANCZOS)
+
+
 def draw():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", default=None)
     ap.add_argument("--city", default="Suzhou")
     ap.add_argument("--no-weather", action="store_true")
     ap.add_argument("-o", "--out", default=None)
+    ap.add_argument("--panel", choices=("420", "213"), default="420",
+                    help="420 = ZKC42V 400x300 month grid; "
+                         "213 = ZKC21V 128x250 daily landscape card")
     a = ap.parse_args()
 
     date = dt.date.fromisoformat(a.date) if a.date else dt.date.today()
+    if a.panel == "213":
+        img = draw_daily(date, a)
+        out = a.out or f"examples/calendar_daily_{date.isoformat()}.png"
+        Path(out).parent.mkdir(exist_ok=True)
+        img.save(out)
+        print(out)
+        return
     img = Image.new("RGB", (CW, CH), WHITE)
     d = ImageDraw.Draw(img)
 

@@ -79,10 +79,17 @@ static void epd_wait_busy(uint32_t timeout_ms)
     }
 }
 
+#ifdef EPD_DEBUG
+uint16_t s_dbg_init_to;
+uint16_t s_dbg_refresh_to;
+uint32_t s_dbg_init_ms;
+uint32_t s_dbg_refresh_ms;
+#endif
+
 void epd_init(void)
 {
     board_epd_enable(1);
-    DRV_DELAY_MS(10);
+    DRV_DELAY_MS(20);            /* let the panel boost circuit charge */
 
     board_epd_reset(0);
     DRV_DELAY_MS(20);
@@ -157,6 +164,10 @@ void epd_show(const uint8_t *black_plane, const uint8_t *red_plane)
 
     epd_cmd(0x10);                  /* deep sleep */
     epd_data1(0x01);
+#if !EPD_EN_ALWAYS_ON
+    DRV_DELAY_MS(2);
+    board_epd_enable(0);             /* cut panel power while idle */
+#endif
 }
 
 /* 2bpp indexed display is not used on this BWR panel; keeps the API. */
@@ -177,4 +188,8 @@ void epd_clear(void)
 
     epd_cmd(0x10);                  /* deep sleep */
     epd_data1(0x01);
+#if !EPD_EN_ALWAYS_ON
+    DRV_DELAY_MS(2);
+    board_epd_enable(0);             /* cut panel power while idle */
+#endif
 }

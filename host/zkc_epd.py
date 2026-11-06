@@ -263,6 +263,8 @@ class EpdClient:
             if len(data) >= 3 and data[0] == EVT_DONE and data[1] == seq:
                 if data[2] != 0:
                     raise DeviceError(f"display failed: 0x{data[2]:02X}")
+                if len(data) > 3:
+                    print("Panel debug tail:", data[3:].hex().upper())
                 return
             if len(data) >= 3 and data[0] == EVT_ERROR:
                 raise DeviceError(f"device error: 0x{data[2]:02X}")

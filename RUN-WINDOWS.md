@@ -11,10 +11,12 @@ FreeInk - Windows 快速上手
     backup\                出厂固件备份（重要！别删）
 
 
-1. 装 Python 依赖（只需一次）
+1. 装 Python 依赖（只需一次，推荐 uv）
 --------------------------------
-双击  tools\win\setup.bat
-（要求 Python 3.10+，安装时勾选 "Add to PATH"）
+    uv venv
+    uv pip install -r host\requirements.txt
+之后在仓库根目录用 `.venv\Scripts\python host\zkc_epd.py ...`，
+或 `uv run host\zkc_epd.py ...`。
 
 
 2. 发图上屏
@@ -26,6 +28,7 @@ FreeInk - Windows 快速上手
     send.bat 21 C:\path\photo.jpg            发任意图片
     send.bat 42 C:\path\card.png --preview out.png   先看转换结果
     clear.bat 21 | 42      清屏
+    daily.bat 21 | 42      一键生成"今日卡片"并上屏（21=竖排日报卡，42=整月日历）
 
 等价的手敲命令（PowerShell）：
 
@@ -34,6 +37,9 @@ FreeInk - Windows 快速上手
     py -3 host\zkc_epd.py --name ZKC42V --image mypic.png
 
 说明：
+- 刷写脚本会自动找 J-Link（PATH → Program Files → 手动输入一次并记住 jlink.cfg）。
+- ZKC21V 的 LED 默认"广播时全灭、只在连接/传图/刷屏时亮"（省电；board.h 的
+  LED_IDLE_BLINK 改回 1 即恢复蓝灯慢闪心跳）。
 - ZKC21V 的方向补偿已内置（rotate90+mirror-y），横版图直接发。
 - ZKC42V 原生横屏，什么都不用带。
 - 同一张桌上两块板都在时，用 --address 指定，或先关掉另一块。

@@ -386,12 +386,34 @@ void ble_epd_task(void)
             epd_show(s_image, s_image + EPD_PLANE_BYTES);
         }
         led_set_pattern(LED_SUCCESS);
+#ifdef EPD_DEBUG
+        uint8_t done[15] = { EVT_DONE, seq, STATUS_OK,
+                             (uint8_t)s_dbg_init_to, (uint8_t)(s_dbg_init_to >> 8),
+                             (uint8_t)s_dbg_refresh_to, (uint8_t)(s_dbg_refresh_to >> 8),
+                             (uint8_t)s_dbg_init_ms, (uint8_t)s_dbg_refresh_ms,
+                             (uint8_t)board_epd_busy(),
+                             (uint8_t)s_spi_timeout, (uint8_t)(s_spi_timeout >> 8),
+                             (uint8_t)(s_spi_timeout >> 16), (uint8_t)(s_spi_timeout >> 24) };
+        notify(done, sizeof(done));
+#else
         uint8_t done[3] = { EVT_DONE, seq, STATUS_OK };
         notify(done, sizeof(done));
+#endif
     } else if (op == 2) {
         epd_clear();
         led_set_pattern(LED_SUCCESS);
+#ifdef EPD_DEBUG
+        uint8_t done[15] = { EVT_DONE, seq, STATUS_OK,
+                             (uint8_t)s_dbg_init_to, (uint8_t)(s_dbg_init_to >> 8),
+                             (uint8_t)s_dbg_refresh_to, (uint8_t)(s_dbg_refresh_to >> 8),
+                             (uint8_t)s_dbg_init_ms, (uint8_t)s_dbg_refresh_ms,
+                             (uint8_t)board_epd_busy(),
+                             (uint8_t)s_spi_timeout, (uint8_t)(s_spi_timeout >> 8),
+                             (uint8_t)(s_spi_timeout >> 16), (uint8_t)(s_spi_timeout >> 24) };
+        notify(done, sizeof(done));
+#else
         uint8_t done[3] = { EVT_DONE, seq, STATUS_OK };
         notify(done, sizeof(done));
+#endif
     }
 }

@@ -216,7 +216,7 @@ Windows：
 ### 烧录
 
 ```text
-device OM662XX
+device OM6626
 si SWD
 speed 4000
 connect
@@ -437,6 +437,17 @@ BOARD=ZKC42V          (board.h: 400x300, EPD_DEFAULT_FORMAT=2, BOARD_HAS_RGB_LED
 
 ---
 
+
+
+## 调试事故记录（2026-11-06，已结案）
+
+主循环启用 PM 睡眠后，COMMIT/CLEAR 期间 BLE 触发的 light-sleep 切走了 SPI
+时钟域，`drv_spi_transfer` 死等 TX FIFO，屏永远不刷。J-Link 现场抓取
+PC=drv_spi_transfer+0x104 + golden 对照定位。修复：PM 改为 `make PM=1`
+选配（默认关，行为与 golden 一致）；后续正解是刷屏期间
+`pm_sleep_block()`。附带结论：EPD EN 必须上电即置高（运行时浪涌也会拖垮
+总线）。Makefile 教训：`DEFINES +=` 必须写在 `DEFINES =` 之后，否则被整体
+覆盖——A/B 实验必须 `cmp` 验证两组二进制确有不同。详见 docs/POWER.md。
 ## 13. 交接清单
 
 需要一起交接的文件/目录：

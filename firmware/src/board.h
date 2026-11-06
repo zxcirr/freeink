@@ -25,7 +25,22 @@
 #define PAD_EPD_BUSY    3
 #define PAD_EPD_EN      7
 
-/* RGB status LED, active low (ZKC21V only; BOARD_HAS_RGB_LED gates it). */
+/* Panel power EN strategy:
+ *   1 = EN stays on after first refresh (the behaviour that was verified
+ *       working on both panels; costs a few uA..mA of panel standby).
+ *   0 = EN is cut after every refresh and re-applied with 20 ms settling
+ *       on next epd_init() (saves power, but if the panel loses its deep-
+ *       sleep latch state the display can stop updating -- bench-test
+ *       before using in the field). */
+#ifndef EPD_EN_ALWAYS_ON
+#define EPD_EN_ALWAYS_ON 1
+#endif
+
+/* RGB status LED, active low (ZKC21V only; BOARD_HAS_RGB_LED gates it).
+ * LED_IDLE_BLINK: 1 = blue heartbeat blink while advertising (more visible,
+ * costs ~1-2 mA average on 2.13"); 0 = LED fully dark until a central
+ * connects / transfers / refreshes ("lit only during work", default). */
+#define LED_IDLE_BLINK 0
 #define PAD_LED_R       4
 #define PAD_LED_G       18
 #define PAD_LED_B       17
@@ -57,6 +72,14 @@
 
 #define EPD_PLANE_BYTES (((EPD_WIDTH + 7) / 8) * EPD_HEIGHT)
 #define EPD_IMAGE_BYTES (EPD_PLANE_BYTES * 2)
+
+#ifdef EPD_DEBUG
+extern volatile uint32_t s_spi_timeout;
+extern uint16_t s_dbg_init_to;    /* busy-timeouts during epd_init (bitmask) */
+extern uint16_t s_dbg_refresh_to; /* busy-timeouts during refresh */
+extern uint32_t s_dbg_init_ms;    /* elapsed ms in epd_init */
+extern uint32_t s_dbg_refresh_ms; /* elapsed ms in refresh */
+#endif
 
 void board_init(void);
 void board_epd_enable(int on);

@@ -10,7 +10,19 @@
 ############################################################################################
 
 BOARD ?= ZKC42V
-PROJECT = freeink_$(BOARD)
+
+# SLOT: empty = legacy single-image at 0x404000;
+#       A = 0x414000 (192K), B = 0x444000 (192K) for the FreeInk A/B layout
+SLOT ?=
+ifeq ($(SLOT),A)
+SLOT_ORIGIN = 0x00414000
+SLOT_LENGTH = 192K
+else ifeq ($(SLOT),B)
+SLOT_ORIGIN = 0x00444000
+SLOT_LENGTH = 192K
+endif
+
+PROJECT = freeink_$(BOARD)$(if $(SLOT),_slot$(SLOT))
 
 # Keep the linked ELF/bin/hex/map in a dedicated directory.
 BUILD_DIR = ../build
@@ -26,7 +38,7 @@ PRJ_LINK  = $(SDK_ROOT)/projects/freeink
 PRJ_REL   = projects/freeink/src
 $(shell ln -sfn $(abspath ../) $(PRJ_LINK))
 $(shell mkdir -p $(BUILD_DIR))
-TARGET = $(BUILD_DIR)/freeink_$(BOARD)
+TARGET = $(BUILD_DIR)/freeink_$(BOARD)$(if $(SLOT),_slot$(SLOT))
 
 ROOT_DIR = $(SDK_ROOT)/
 CUR_ROMLIB_DIR = $(ROOT_DIR)hal/device/om6626/rom_lib/current/
@@ -40,6 +52,13 @@ EPD_SRC = $(ROOT_DIR)$(PRJ_REL)/epd_jd79668.c
 endif
 
 DEFINES = CONFIG_OM6626A=1 CONFIG_LIB_PRESET_BLE_1PERIPHERAL CONFIG_AUTOCONF_PRESET _start=main $(BOARD_DEFINE)=1
+
+ifeq ($(PM),1)
+DEFINES += PM_SLEEP_ENABLE
+endif
+ifeq ($(EPDDBG),1)
+DEFINES += EPD_DEBUG
+endif
 
 CONFIG_OPTIMIZATION_LEVEL = 4
 CONFIG_LIB_GENERATE = n
@@ -121,7 +140,14 @@ INCLUDES = \
     $(ROOT_DIR)include \
     $(ROOT_DIR)$(PRJ_REL)
 
-LDSCRIPT = $(ROOT_DIR)hal/device/om6626/rom_lib/current/GCC/linker_flash.ld
+LDSCRIPT_BASE = $(ROOT_DIR)hal/device/om6626/rom_lib/current/GCC/linker_flash.ld
+ifneq ($(SLOT),)
+LDSCRIPT = $(BUILD_DIR)/linker_slot$(SLOT).ld
+$(shell sed -e 's/ORIGIN = 0x00404000, LENGTH = 1012K/ORIGIN = $(SLOT_ORIGIN), LENGTH = $(SLOT_LENGTH)/' $(LDSCRIPT_BASE) > $(LDSCRIPT))
+LDDIR  = $(CUR_ROMLIB_DIR)GCC
+else
+LDSCRIPT = $(LDSCRIPT_BASE)
+endif
 LDEXTFILE = $(ROOT_DIR)hal/device/om6626/rom_lib/current/GCC/linker_ble_1peripheral.mk
 
 include $(ROOT_DIR)tools/build/rules_prj.mk

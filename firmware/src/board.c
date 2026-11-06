@@ -15,6 +15,10 @@ static const pin_config_t pin_config[] = {
 static const gpio_config_t gpio_config[] = {
     {OM_GPIO0, PAD_EPD_DC,   GPIO_DIR_OUTPUT, GPIO_LEVEL_LOW,  GPIO_TRIG_NONE},
     {OM_GPIO0, PAD_EPD_RST,  GPIO_DIR_OUTPUT, GPIO_LEVEL_HIGH, GPIO_TRIG_NONE},
+    /* EN asserted at init: the panel boost capacitors charge during the
+       board power-on window, NOT during a runtime SPI transaction.  Toggling
+       EN later caused rail dips that froze the SPI peripheral (dead wait in
+       drv_spi_transfer TX polling). */
     {OM_GPIO0, PAD_EPD_EN,   GPIO_DIR_OUTPUT, GPIO_LEVEL_HIGH, GPIO_TRIG_NONE},
     {OM_GPIO0, PAD_EPD_BUSY, GPIO_DIR_INPUT,  GPIO_LEVEL_HIGH, GPIO_TRIG_NONE},
 };
@@ -65,7 +69,17 @@ int board_epd_busy(void)
     return drv_gpio_read(OM_GPIO0, GPIO_MASK(PAD_EPD_BUSY)) != 0;
 }
 
+#ifdef EPD_DEBUG
+volatile uint32_t s_spi_timeout;
+#endif
+
 void board_epd_write(const uint8_t *data, uint16_t len)
 {
-    drv_spi_transfer(OM_SPI1, data, len, NULL, 0, 1000);
+    om_error_t err = drv_spi_transfer(OM_SPI1, data, len, NULL, 0, 1000);
+#ifdef EPD_DEBUG
+    if (err != OM_ERROR_OK)
+        s_spi_timeout++;
+#else
+    (void)err;
+#endif
 }

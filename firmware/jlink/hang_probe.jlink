@@ -1,0 +1,5 @@
+// Attach while the tag is stuck: halts the CPU and dumps PC/registers.
+// Send the "PC = ..." (and R14/LR) line back for symbolization.
+// Power-cycle the tag afterwards to resume normal operation.
+h
+exit

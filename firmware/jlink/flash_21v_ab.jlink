@@ -1,0 +1,9 @@
+// Flash FreeInk boot v0 (0x404000) + app slot A (0x414000) to ZKC21V.
+// Requires: firmware\build\freeink_boot.bin and freeink_ZKC21V_slotA.bin
+// Safe rollback: restore_21v.jlink writes the stock InkTag recovery back.
+h
+loadbin firmware\build\freeink_boot.bin, 0x404000
+loadbin firmware\build\freeink_ZKC21V_slotA.bin, 0x414000
+r
+g
+exit

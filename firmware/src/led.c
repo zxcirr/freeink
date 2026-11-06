@@ -93,8 +93,13 @@ void led_task(void)
         break;
 
     case LED_ADVERTISING:
+#if LED_IDLE_BLINK
         /* Blue, 500 ms on / 500 ms off. */
         led_apply(0, 0, ((t / 500) & 1) ? 0 : 1);
+#else
+        /* "lit only during work": dark while idle advertising. */
+        led_apply(0, 0, 0);
+#endif
         break;
 
     case LED_CONNECTED:

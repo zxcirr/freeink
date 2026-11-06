@@ -51,10 +51,8 @@ tools/win/        Windows 一键 .bat
 ```bash
 git clone https://github.com/zxcirr/freeink.git
 cd freeink
-python -m pip install -r host/requirements.txt   # bleak + Pillow + lunar-python
+uv pip install -r host/requirements.txt   # bleak + Pillow + lunar-python   (pip 也行)
 ```
-
-Windows 用户也可以直接双击 `tools/win/setup.bat`。
 
 ### 固件构建（可选，改固件才需要）
 

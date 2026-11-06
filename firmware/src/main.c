@@ -10,6 +10,14 @@
 #include "ble_epd.h"
 #include "led.h"
 
+static void epd_power_idle(void)
+{
+#if !EPD_EN_ALWAYS_ON
+    /* Panel truly off between refreshes: EN low.  epd_init() re-enables it. */
+    board_epd_enable(0);
+#endif
+}
+
 int main(void)
 {
     struct ob_stack_param param = {
@@ -31,6 +39,17 @@ int main(void)
     omble_init(&param);
 
     ble_epd_init();
+    epd_power_idle();
+
+    /* Power management (sleep between radio events), vendor ble_app_simple
+       pattern.  DISABLED BY DEFAULT: entering PM sleep broke ongoing SPI
+       transactions (drv_spi_transfer froze spinning on the TX FIFO while
+       COMMIT was flashing the panel; see docs/POWER.md).  Re-enable with
+       `make PM=1` once pm_sleep_block() guards refresh in ble_epd_task. */
+#ifdef PM_SLEEP_ENABLE
+    pm_sleep_enable(true);
+    pm_sleep_allow(PM_ID_SHELL);
+#endif
 
     __enable_irq();
 
@@ -38,5 +57,13 @@ int main(void)
         evt_schedule();
         ble_epd_task();
         led_task();
+
+#ifdef PM_SLEEP_ENABLE
+        OM_CRITICAL_BEGIN();
+        if (evt_get_all() == 0) {
+            pm_power_manage();
+        }
+        OM_CRITICAL_END();
+#endif
     }
 }

@@ -75,6 +75,8 @@ static void epd_fill(uint8_t cmd, uint8_t value)
  * SSD1680: BUSY high while the panel is working.  Wait until BUSY
  * falls, polling every millisecond, up to timeout_ms.
  */
+static uint32_t s_busy_to;      /* per-wait timeout history (bit shifts) */
+
 static void epd_wait_busy(uint32_t timeout_ms)
 {
     DRV_DELAY_MS(2);            /* let BUSY rise after a 0x20 command */
@@ -82,6 +84,7 @@ static void epd_wait_busy(uint32_t timeout_ms)
         DRV_DELAY_MS(1);
         timeout_ms--;
     }
+    s_busy_to = (s_busy_to << 1) | (board_epd_busy() ? 1 : 0);
 }
 
 /* Per-frame window + mode setup (runs only while the panel is idle). */
@@ -128,10 +131,21 @@ static void epd_config(void)
  * and display init cycle.  Must end with the panel idle so that the
  * RAM writes that follow are actually accepted.
  */
+#ifdef EPD_DEBUG
+uint16_t s_dbg_init_to;
+uint16_t s_dbg_refresh_to;
+uint32_t s_dbg_init_ms;
+uint32_t s_dbg_refresh_ms;
+#endif
+
 void epd_init(void)
 {
+#ifdef EPD_DEBUG
+    uint32_t t0 = PMU_TIMER_TICK2MS(drv_pmu_timer_cnt_get());
+    s_busy_to = 0;
+#endif
     board_epd_enable(1);
-    DRV_DELAY_MS(10);
+    DRV_DELAY_MS(20);            /* let the panel boost circuit charge */
 
     board_epd_reset(0);
     DRV_DELAY_MS(10);
@@ -153,6 +167,10 @@ void epd_init(void)
     epd_data1(0xB1);
     epd_cmd(0x20);
     epd_wait_busy(5000);
+#ifdef EPD_DEBUG
+    s_dbg_init_to = (uint16_t)s_busy_to;
+    s_dbg_init_ms = PMU_TIMER_TICK2MS(drv_pmu_timer_cnt_get()) - t0;
+#endif
 }
 
 void epd_show(const uint8_t *black_plane, const uint8_t *red_plane)
@@ -166,13 +184,25 @@ void epd_show(const uint8_t *black_plane, const uint8_t *red_plane)
     epd_cmd(0x26);              /* red RAM: invert (host: 0 = red) */
     epd_data_inverted(red_plane, EPD_PLANE_BYTES);
 
+#ifdef EPD_DEBUG
+    s_busy_to = 0;
+    uint32_t t1 = PMU_TIMER_TICK2MS(drv_pmu_timer_cnt_get());
+#endif
     epd_cmd(0x22);              /* display update sequence 0xC7 (OTP LUT) */
     epd_data1(0xC7);
     epd_cmd(0x20);              /* master activation */
     epd_wait_busy(20000);       /* stock firmware allows 15 s for refresh */
+#ifdef EPD_DEBUG
+    s_dbg_refresh_to = (uint16_t)s_busy_to;
+    s_dbg_refresh_ms = PMU_TIMER_TICK2MS(drv_pmu_timer_cnt_get()) - t1;
+#endif
 
     epd_cmd(0x10);              /* deep sleep */
     epd_data1(0x01);
+#if !EPD_EN_ALWAYS_ON
+    DRV_DELAY_MS(2);
+    board_epd_enable(0);         /* cut panel power while idle */
+#endif
 }
 
 void epd_clear(void)
@@ -190,6 +220,10 @@ void epd_clear(void)
 
     epd_cmd(0x10);              /* deep sleep */
     epd_data1(0x01);
+#if !EPD_EN_ALWAYS_ON
+    DRV_DELAY_MS(2);
+    board_epd_enable(0);         /* cut panel power while idle */
+#endif
 }
 
 /*
