@@ -220,7 +220,6 @@ def draw():
     T(26, fy + 4, yi, 12, anchor="lm")
     chip(214, fy + 4, "忌")
     T(232, fy + 4, ji, 12, anchor="lm")
-    T(W - 8, fy + 4, "FreeInk", 11, RED, anchor="rm")
 
     out = a.out or f"examples/calendar_{date.isoformat()}.png"
     img = img.resize((W, H), Image.Resampling.LANCZOS)
