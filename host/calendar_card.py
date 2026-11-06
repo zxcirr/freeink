@@ -230,9 +230,9 @@ def draw():
     yi = " ".join(today_lunar.getDayYi()[:3])
     ji = " ".join(today_lunar.getDayJi()[:2])
     chip(8, fy + 4, "宜")
-    T(28, fy + 4, yi, 13, anchor="lm")
+    T(28, fy + 12, yi, 13, anchor="lm")
     chip(214, fy + 4, "忌")
-    T(234, fy + 4, ji, 13, anchor="lm")
+    T(234, fy + 12, ji, 13, anchor="lm")
 
     out = a.out or f"examples/calendar_{date.isoformat()}.png"
     img = img.resize((W, H), Image.Resampling.LANCZOS)
