@@ -138,88 +138,89 @@ def draw():
     iso = date.isocalendar()
     weekend = date.weekday() >= 5
 
-    # ---------- header ----------
-    # line A: "2026年11月" + [星期五] in red brackets if weekend
-    ym_s = f"{date.year}年{date.month}月"
-    T(8, 6, ym_s, 17)
-    w_ym = d.textlength(ym_s, font=font(17, True)) / SCALE
-    wd_s = f"[星期{WEEKDAYS[date.weekday()]}]"
-    T(8 + w_ym + 4, 6, wd_s, 17, RED if weekend else BLACK)
-    T(W - 8, 8, f"第{iso[1]}周", 12, BLACK, anchor="ra")
-
-    # line B: lunar + ganzhi day + year shengxiao
+    # ---------- header: red band (2 lines, white text) ----------
+    BAND_H = 48
+    R(0, 0, W, BAND_H, RED)
+    wd_s = f"星期{WEEKDAYS[date.weekday()]}"
+    T(8, 16, f"{date.year}年{date.month}月{date.day}日 {wd_s}", 16, WHITE,
+      anchor="lm")
+    T(W - 8, 16, f"第{iso[1]}周", 16, WHITE, anchor="rm")
     ly_gz = today_lunar.getYearInGanZhi()
     dy_gz = today_lunar.getDayInGanZhi()
-    T(8, 30, f"农历{today_lunar.getMonthInChinese()}月{today_lunar.getDayInChinese()}"
-             f" · {ly_gz}年·属{ZODIAC[ZHI.index(ly_gz[1])]} · {dy_gz}日", 12)
-
-    # line C: solar term + weather
-    parts = []
+    T(8, 36, f"农历{today_lunar.getMonthInChinese()}月{today_lunar.getDayInChinese()}"
+             f" · {ly_gz}年·属{ZODIAC[ZHI.index(ly_gz[1])]} · {dy_gz}日",
+      12, WHITE, anchor="lm")
+    term_s = ""
     nq = today_lunar.getNextJieQi(True)
     if nq:
         nd = dt.date.fromisoformat(nq.getSolar().toYmd())
         delta = (nd - date).days
-        parts.append("明日" + nq.getName() if delta == 1 else
-                     "今日" + nq.getName() if delta == 0 else
-                     f"{delta}天后{nq.getName()}")
+        term_s = ("明日" + nq.getName() if delta == 1 else
+                  "今日" + nq.getName() if delta == 0 else
+                  f"{delta}天后{nq.getName()}")
     wx = None if a.no_weather else get_weather(a.city)
     wx_s = f"{wx['city']} {wx['desc']} {wx['lo']}~{wx['hi']}℃" if wx else ""
-    term_s = " · ".join(parts)
-    T(8, 50, term_s, 12, RED)
-    if wx_s:
-        T(W - 8, 50, wx_s, 12, BLACK, anchor="ra")
+    right2 = " · ".join(x for x in (term_s, wx_s) if x)
+    if right2:
+        T(W - 8, 36, right2, 12, WHITE, anchor="rm")
 
-    R(6, 66, W - 6, 67, BLACK)
-
-    # ---------- weekday header ----------
+    # ---------- weekday band: black, white ----------
+    WB_Y = BAND_H + 2
     colw = (W - 16) / 7.0
+    R(0, WB_Y, W, WB_Y + 20, BLACK)
     for i, ch in enumerate(HEADERS):
         cx = 8 + colw * i + colw / 2
-        T(cx, 70, ch, 12, RED if i in (0, 6) else BLACK, anchor="ma")
-    R(6, 86, W - 6, 87, BLACK)
+        T(cx, WB_Y + 10, ch, 13, WHITE, anchor="mm")
 
-    # ---------- month grid (Sunday-first) ----------
+    # ---------- month grid ----------
     first = date.replace(day=1)
-    start = first - dt.timedelta(days=(first.weekday() + 1) % 7)  # back to Sunday
-    gy, rowh = 89, 30.0
-    for r in range(6):
+    start = first - dt.timedelta(days=(first.weekday() + 1) % 7)  # Sunday
+    last = (first.replace(day=_cal.monthrange(date.year, date.month)[1]))
+    rows_needed = ((last - start).days // 7) + 1
+    grid_y = WB_Y + 24
+    foot_h = 24
+    rowh = (H - foot_h - 6 - grid_y) / rows_needed
+
+    for r in range(rows_needed):
         for c in range(7):
             cell = start + dt.timedelta(days=r * 7 + c)
             cx = 8 + colw * c + colw / 2
-            cy = gy + rowh * r
+            top = grid_y + rowh * r
             in_month = cell.month == date.month
             is_today = cell == date
             cl = Solar.fromYmd(cell.year, cell.month, cell.day).getLunar()
 
             if is_today:
-                rr = 12
-                d.ellipse([(cx - rr) * SCALE, (cy + 10 - rr) * SCALE,
-                           (cx + rr) * SCALE, (cy + 10 + rr) * SCALE], fill=BLACK)
-                T(cx, cy + 10, str(cell.day), 14, WHITE, anchor="mm")
-                T(cx, cy + 24, lunar_text(cl), 9, RED, anchor="ma")
+                # red filled cell, white number + white lunar
+                m = 2.5
+                d.rounded_rectangle(
+                    [(8 + colw * c + m) * SCALE, (top + m) * SCALE,
+                     (8 + colw * (c + 1) - m) * SCALE, (top + rowh - m) * SCALE],
+                    radius=4 * SCALE, fill=RED)
+                T(cx, top + rowh * 0.36, str(cell.day), 16, WHITE, anchor="mm")
+                T(cx, top + rowh * 0.70, lunar_text(cl), 10, WHITE, anchor="mm")
             elif in_month:
-                T(cx, cy + 2, str(cell.day), 13,
-                  RED if cell.weekday() >= 5 else BLACK, anchor="ma")
-                T(cx, cy + 19, lunar_text(cl), 9,
-                  RED if cell.weekday() >= 5 else BLACK, anchor="ma", bold=False)
+                col = RED if cell.weekday() >= 5 else BLACK
+                T(cx, top + 2, str(cell.day), 15, col, anchor="ma")
+                T(cx, top + rowh - 13, lunar_text(cl), 10,
+                  BLACK, anchor="ma", bold=True)
             else:
-                T(cx, cy + 3, str(cell.day), 11, BLACK, anchor="ma", bold=False)
+                T(cx, top + 3, str(cell.day), 11, BLACK, anchor="ma", bold=False)
 
     # ---------- footer: real almanac yi/ji ----------
-    fy = gy + rowh * 6 + 4          # ~273
-    R(6, fy - 4, W - 6, fy - 3, BLACK)
+    fy = H - foot_h + 1
 
     def chip(x, y, ch):
-        R(x, y, x + 13, y + 13, RED)
-        T(x + 6.5, y + 6.5, ch, 10, WHITE, anchor="mm")
+        R(x, y, x + 14, y + 14, RED)
+        T(x + 7, y + 7, ch, 11, WHITE, anchor="mm")
 
     yi = " ".join(today_lunar.getDayYi()[:3])
     ji = " ".join(today_lunar.getDayJi()[:2])
-    chip(8, fy + 2, "宜")
-    T(24, fy + 2, yi, 11, anchor="la")
-    chip(200, fy + 2, "忌")
-    T(216, fy + 2, ji, 11, anchor="la")
-    T(W - 8, fy + 3, "FreeInk", 11, RED, anchor="ra")
+    chip(8, fy + 4, "宜")
+    T(26, fy + 4, yi, 12, anchor="lm")
+    chip(214, fy + 4, "忌")
+    T(232, fy + 4, ji, 12, anchor="lm")
+    T(W - 8, fy + 4, "FreeInk", 11, RED, anchor="rm")
 
     out = a.out or f"examples/calendar_{date.isoformat()}.png"
     img = img.resize((W, H), Image.Resampling.LANCZOS)
