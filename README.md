@@ -51,7 +51,7 @@ tools/win/        Windows 一键 .bat
 ```bash
 git clone https://github.com/zxcirr/freeink.git
 cd freeink
-python -m pip install -r host/requirements.txt   # bleak + Pillow + lunardate
+python -m pip install -r host/requirements.txt   # bleak + Pillow + lunar-python
 ```
 
 Windows 用户也可以直接双击 `tools/win/setup.bat`。
@@ -110,8 +110,8 @@ python host/zkc_epd.py --address A5:5A:00:00:42:C0 --image x.png
 日历卡片（今天示例输出 `examples/calendar_2026-11-06.png`）：
 
 ```bash
-# 生成：大字日期 + 农历 + 干支/十二值神宜忌 + 节气 + wttr.in 实时天气
-python host/calendar_card.py --city Beijing
+# 生成整月日历卡（默认苏州天气）：日期网格+农历、干支、宜忌、节气、第几周
+python host/calendar_card.py
 # 指定日期 / 换城市 / 不要天气 / 自定义输出
 python host/calendar_card.py --date 2027-01-01 --city Shanghai --no-weather -o newyear.png
 # 直接上屏
@@ -188,7 +188,7 @@ SCK GPIO15  MOSI GPIO21  CS GPIO22  DC GPIO20  RST GPIO16  BUSY GPIO3  EN GPIO7
 
 - 本项目代码（firmware/src、host、tools、docs 中原创内容）：**MIT**（见 [LICENSE](LICENSE)）
 - OnMicro OM6626 SDK 及其预编译 BLE ROM 库：随 SDK 自带许可，需自行获取，本仓库不含
-- 注意：`lunardate` 为 GPL 许可的独立 PyPI 依赖，仅上位机运行时使用，不影响本仓库代码许可
+- 日历功能依赖 `lunar-python`（MIT）与 `Pillow`/`bleak`，均为标准 PyPI 开源包
 
 ## 免责声明
 
