@@ -1,0 +1,7 @@
+// Restore the ZKC21V first-slot (0x404000, 155648 bytes) to the stock InkTag
+// recovery image saved earlier as restore-appslot-0x404000.bin.
+h
+loadbin backup\restore-appslot-0x404000.bin, 0x404000
+r
+g
+exit

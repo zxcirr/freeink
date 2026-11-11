@@ -1,0 +1,26 @@
+Vendored subset of the OnMicro OM6626 SDK
+==========================================
+
+This directory contains a build-critical subset of the OnMicro OM6626 SDK
+(BSD-3-Clause style license; each source file carries the OnMicro
+copyright notice and redistribution conditions).
+
+Upstream:
+  - Official:  https://github.com/OnMicro/OM6626_SDK
+  - Mirror used locally when vendoring: https://gitee.com/jtcom/OM6626.git
+    (commit c34a8ef)
+
+What was kept (enough to build FreeInk firmware + bootloader):
+  hal/CMSIS/Core, hal/driver, hal/device (headers + om6626 startup/system),
+  hal/device/om6626/rom_lib/current/GCC (linker scripts + rom_lib_ble_1peripheral.a),
+  common/, components/ (shell, ble includes+common, nvds, evt, crypto, pm,
+  mbr, trace, eeprom, segger), include/, tools/build/, bsp/include/.
+
+What was dropped (not referenced by FreeInk):
+  docs/, rtos/, projects/* (except an auto-created `projects/freeink`
+  symlink), IAR/ARM toolchain libs, rom_lib variants except the 1-peripheral
+  BLE library, CMSIS DSP.
+
+Full SDK (much larger, includes examples & docs) is available from the
+upstream URLs above; set SDK_ROOT to an external copy if you prefer:
+  make BOARD=ZKC21V SDK_ROOT=/path/to/OM6626-sdk

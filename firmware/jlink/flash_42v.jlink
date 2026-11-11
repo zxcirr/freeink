@@ -1,0 +1,6 @@
+// Flash FreeInk to ZKC42V (4.2"). Run via flash_42v.bat.
+h
+loadbin firmware\build\freeink_ZKC42V.bin, 0x404000
+r
+g
+exit

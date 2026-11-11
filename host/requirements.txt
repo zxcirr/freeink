@@ -1,0 +1,3 @@
+bleak>=0.22
+Pillow>=10.0
+lunar-python>=1.4

@@ -1,0 +1,6 @@
+// Flash the PM-enabled candidate build to ZKC21V for bench validation.
+h
+loadbin firmware\build\freeink_ZKC21V_pmtest.bin, 0x404000
+r
+g
+exit

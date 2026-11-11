@@ -1,0 +1,7 @@
+// Flash FreeInk to ZKC21V (2.13"). Run via flash_21v.bat (or JLink Commander).
+// Never erase the whole chip; only the 0x404000 slot is touched.
+h
+loadbin firmware\build\freeink_ZKC21V.bin, 0x404000
+r
+g
+exit

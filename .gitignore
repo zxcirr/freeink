@@ -1,0 +1,27 @@
+# build outputs
+firmware/build/
+firmware/gcc/.build_*/
+firmware/gcc/a.bin
+firmware/gcc/a.axf
+
+# python
+__pycache__/
+*.pyc
+
+# local artifacts
+host/out.png
+!host/examples/calendar_*.png
+*.log
+/backup/
+# vendored GPL dependency (do not redistribute)
+host/_libs/
+firmware/boot/build/
+firmware/boot/gcc/.build_*/
+a.bin
+a.axf
+
+tools/win/jlink.cfg
+# local machine state
+jlink.cfg
+# auto-created by build
+/sdk/projects/freeink

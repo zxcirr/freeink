@@ -1,0 +1,7 @@
+// Full backup of the readable flash range 0x404000..0x4FFFFF (1015808 bytes)
+// of the ZKC21V to backup\zkc21v-app-0x404000.bin
+h
+savebin backup\zkc21v-app-0x404000.bin, 0x404000, 0xFC000
+r
+g
+exit
